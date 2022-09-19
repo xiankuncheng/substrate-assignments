@@ -22,11 +22,10 @@ fn it_works_for_creating_kitty() {
 			<Test as Config>::KittyPrice::get()
 		);
 
-		// TODO: figure out why assert_has_event keep failling with 0 event.
-		// let kitty = Kitties::<Test>::get(kitty_id).unwrap();
-		// System::assert_has_event(TestEvent::KittiesModule(Event::KittyCreated(
-		// 	account_id, kitty_id, kitty,
-		// )));
+		let kitty = Kitties::<Test>::get(kitty_id).unwrap();
+		System::assert_has_event(TestEvent::KittiesModule(Event::KittyCreated(
+			account_id, kitty_id, kitty,
+		)));
 	});
 }
 
@@ -96,11 +95,14 @@ fn it_works_for_breeding_kitty() {
 			<Test as Config>::KittyPrice::get().checked_mul(owned_kitty_amount).unwrap()
 		);
 
-		// TODO: figure out why assert_has_event keep failling with 0 event.
-		// let kitty = Kitties::<Test>::get(kitty_id).unwrap();
-		// System::assert_has_event(TestEvent::KittiesModule(Event::KittyCreated(
-		// 	account_id, kitty_id, kitty,
-		// )));
+		let kitty = Kitties::<Test>::get(new_breed_kitty_id).unwrap();
+		System::assert_has_event(TestEvent::KittiesModule(Event::KittyBreeded(
+			account_id,
+			new_breed_kitty_id,
+			kitty,
+			kitty_id_1,
+			kitty_id_2,
+		)));
 	});
 }
 
@@ -196,12 +198,11 @@ fn it_works_for_transfering_kitty() {
 			<Test as Config>::KittyPrice::get()
 		);
 
-		// TODO: figure out why assert_has_event keep failling with 0 event.
-		// System::assert_has_event(TestEvent::KittiesModule(Event::KittyTransferred(
-		// 	account_id_1,
-		// 	account_id_2,
-		// 	kitty_id,
-		// )));
+		System::assert_has_event(TestEvent::KittiesModule(Event::KittyTransferred(
+			account_id_1,
+			account_id_2,
+			kitty_id,
+		)));
 	});
 }
 

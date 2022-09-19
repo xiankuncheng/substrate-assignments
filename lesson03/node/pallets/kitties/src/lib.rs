@@ -81,6 +81,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		KittyCreated(T::AccountId, T::KittyIndex, Kitty),
+		KittyBreeded(T::AccountId, T::KittyIndex, Kitty, T::KittyIndex, T::KittyIndex),
 		KittyTransferred(T::AccountId, T::AccountId, T::KittyIndex),
 	}
 
@@ -170,7 +171,9 @@ pub mod pallet {
 				Ok::<(), DispatchError>(())
 			})?;
 
-			Self::deposit_event(Event::KittyCreated(who, kitty_id, new_kitty));
+			Self::deposit_event(Event::KittyBreeded(
+				who, kitty_id, new_kitty, kitty_id_1, kitty_id_2,
+			));
 
 			Ok(())
 		}
