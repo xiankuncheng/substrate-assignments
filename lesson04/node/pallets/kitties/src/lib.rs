@@ -44,25 +44,16 @@ pub mod crypto {
 		type GenericPublic = sp_core::sr25519::Public;
 	}
 }
-const LOCK_BLOCK_EXPIRATION: u32 = 3; // in block number
-const LOCK_TIMEOUT_EXPIRATION: u64 = 10000; // in milli-seconds
-
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::LOCK_BLOCK_EXPIRATION;
-	use crate::LOCK_TIMEOUT_EXPIRATION;
 	use frame_support::inherent::Vec;
 	use frame_support::traits::{Randomness, ReservableCurrency};
 	use frame_support::{log, pallet_prelude::*, traits::Currency};
-	use frame_system::offchain::{
-		AppCrypto, CreateSignedTransaction, SendSignedTransaction, SendUnsignedTransaction,
-		SignedPayload, Signer, SigningTypes, SubmitTransaction,
-	};
+	use frame_system::offchain::SendSignedTransaction;
+	use frame_system::offchain::{AppCrypto, CreateSignedTransaction, Signer};
 	use frame_system::pallet_prelude::*;
+	use sp_io::offchain_index;
 	use sp_runtime::offchain::storage::StorageValueRef;
-	use sp_runtime::offchain::storage_lock::BlockAndTime;
-	use sp_runtime::offchain::storage_lock::StorageLock;
-	use sp_runtime::offchain::Duration;
 	use sp_runtime::traits::Zero;
 	use sp_runtime::traits::{AtLeast32Bit, Bounded, CheckedAdd};
 
@@ -75,7 +66,10 @@ pub mod pallet {
 	}
 
 	#[derive(Encode, Decode, Clone, PartialEq, Eq, Debug, TypeInfo, MaxEncodedLen)]
-	pub struct Kitty(pub [u8; 16]);
+	pub struct Kitty {
+		pub dna: [u8; 16],
+		pub asset: u32,
+	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -143,43 +137,30 @@ pub mod pallet {
 		OwnTooManyKitties,
 	}
 
+	const ONCHAIN_TX_KEY: &[u8] = b"kitty_pallet::indexing01";
+	#[derive(Debug, Encode, Decode, Default)]
+	struct IndexingData<T: Config>(T::KittyIndex);
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn offchain_worker(block_number: T::BlockNumber) {
-			log::info!("Hello World from offchain workers!: {:?}", block_number);
+			let key = Self::derived_key(block_number);
+			let storage_ref = StorageValueRef::persistent(&key);
 
-			if block_number % 2u32.into() != Zero::zero() {
-				// odd
-				let key = Self::derive_key(block_number);
-				let val_ref = StorageValueRef::persistent(&key);
+			if let Ok(Some(data)) = storage_ref.get::<IndexingData<T>>() {
+				// Sleep 8000ms to simulate heavy calculation for kitty asset index.
+				let timeout = sp_io::offchain::timestamp()
+					.add(sp_runtime::offchain::Duration::from_millis(8000));
+				sp_io::offchain::sleep_until(timeout);
 
-				//  get a local random value
-				let random_slice = sp_io::offchain::random_seed();
+				let kitty_id = data.0.into();
 
-				//  get a local timestamp
-				let timestamp_u64 = sp_io::offchain::timestamp().unix_millis();
-
-				// combine to a tuple and print it
-				let value = (random_slice, timestamp_u64);
-				log::info!("in odd block, value to write: {:?}", value);
-
-				//  write or mutate tuple content to key
-				val_ref.set(&value);
-			} else {
-				// even
-				let key = Self::derive_key(block_number - 1u32.into());
-				let mut val_ref = StorageValueRef::persistent(&key);
-
-				// get from db by key
-				if let Ok(Some(value)) = val_ref.get::<([u8; 32], u64)>() {
-					// print values
-					log::info!("in even block, value read: {:?}", value);
-					// delete that key
-					val_ref.clear();
+				if block_number % 2u32.into() != Zero::zero() {
+					_ = Self::send_signed_tx(kitty_id, 1);
+				} else {
+					_ = Self::send_signed_tx(kitty_id, 2);
 				}
 			}
-
-			log::info!("Leave from offchain workers!: {:?}", block_number);
 		}
 	}
 
@@ -198,7 +179,7 @@ pub mod pallet {
 			let kitty_id = Self::get_next_id().map_err(|_| Error::<T>::InvalidKittyId)?;
 
 			let dna = Self::random_value(&who);
-			let kitty = Kitty(dna);
+			let kitty = Kitty { dna, asset: 0 };
 
 			T::Currency::reserve(&who, kitty_price)?;
 			Kitties::<T>::insert(kitty_id, &kitty);
@@ -213,6 +194,8 @@ pub mod pallet {
 				kitties.try_push(kitty_id).map_err(|_| Error::<T>::OwnTooManyKitties)?;
 				Ok::<(), DispatchError>(())
 			})?;
+
+			Self::save_kitty_to_indexing(kitty_id);
 
 			Self::deposit_event(Event::KittyCreated(who, kitty_id, kitty));
 
@@ -239,10 +222,10 @@ pub mod pallet {
 			let selector = Self::random_value(&who);
 
 			let mut data = [0u8; 16];
-			for i in 0..kitty_1.0.len() {
-				data[i] = (kitty_1.0[i] & selector[i]) | (kitty_2.0[i] & !selector[i]);
+			for i in 0..kitty_1.dna.len() {
+				data[i] = (kitty_1.dna[i] & selector[i]) | (kitty_2.dna[i] & !selector[i]);
 			}
-			let new_kitty = Kitty(data);
+			let new_kitty = Kitty { dna: data, asset: 0 };
 
 			T::Currency::reserve(&who, kitty_price)?;
 			Kitties::<T>::insert(kitty_id, &new_kitty);
@@ -257,6 +240,8 @@ pub mod pallet {
 				kitties.try_push(kitty_id).map_err(|_| Error::<T>::OwnTooManyKitties)?;
 				Ok::<(), DispatchError>(())
 			})?;
+
+			Self::save_kitty_to_indexing(kitty_id);
 
 			Self::deposit_event(Event::KittyBreeded(
 				who, kitty_id, new_kitty, kitty_id_1, kitty_id_2,
@@ -301,6 +286,23 @@ pub mod pallet {
 
 			Ok(())
 		}
+
+		#[pallet::weight(0)]
+		pub fn update_kitty(
+			origin: OriginFor<T>,
+			kitty_id: T::KittyIndex,
+			asset: u32,
+		) -> DispatchResultWithPostInfo {
+			let _who = ensure_signed(origin)?;
+
+			let kitty = Self::get_kitty(kitty_id).map_err(|_| Error::<T>::InvalidKittyId)?;
+
+			let new_kitty = Kitty { dna: kitty.dna, asset };
+
+			Kitties::<T>::insert(kitty_id, &new_kitty);
+
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -329,15 +331,45 @@ pub mod pallet {
 			}
 		}
 
-		#[deny(clippy::clone_double_ref)]
-		fn derive_key(block_number: T::BlockNumber) -> Vec<u8> {
+		fn derived_key(block_number: T::BlockNumber) -> Vec<u8> {
 			block_number.using_encoded(|encoded_bn| {
-				b"node-template::storage::"
-					.iter()
+				ONCHAIN_TX_KEY
+					.clone()
+					.into_iter()
+					.chain(b"/".into_iter())
 					.chain(encoded_bn)
 					.copied()
 					.collect::<Vec<u8>>()
 			})
+		}
+
+		fn save_kitty_to_indexing(kitty_id: T::KittyIndex) {
+			let key = Self::derived_key(frame_system::Module::<T>::block_number());
+			let data: IndexingData<T> = IndexingData(kitty_id);
+			offchain_index::set(&key, &data.encode());
+		}
+
+		fn send_signed_tx(kitty_id: T::KittyIndex, payload: u32) -> Result<(), &'static str> {
+			let signer = Signer::<T, T::AuthorityId>::all_accounts();
+			if !signer.can_sign() {
+				return Err(
+					"No local accounts available. Consider adding one via `author_insertKey` RPC.",
+				);
+			}
+
+			let results = signer.send_signed_transaction(|_account| Call::update_kitty {
+				kitty_id,
+				asset: payload,
+			});
+
+			for (acc, res) in &results {
+				match res {
+					Ok(()) => log::info!("[{:?}] Submitted data:{:?}", acc.id, (kitty_id, payload)),
+					Err(e) => log::error!("[{:?}] Failed to submit transaction: {:?}", acc.id, e),
+				}
+			}
+
+			Ok(())
 		}
 	}
 }

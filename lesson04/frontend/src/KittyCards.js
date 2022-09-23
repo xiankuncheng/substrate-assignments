@@ -76,8 +76,9 @@ const TransferModal = props => {
 
 const KittyCard = props => {
   const { kitty, accountPair, setStatus } = props;
-  const { id = null, dna = null, owner = null } = kitty;
-  const displayDna = dna && dna.join(', ');
+  const { id = null, dna = {}, owner = null } = kitty;
+  console.log({...dna, asset: dna.asset.toString()});
+  const displayDna = dna.dna && dna.dna.join(', ');
   const displayId = id === null ? '' : id < 10 ? `0${id}` : id.toString();
   const isSelf = accountPair.address === kitty.owner;
 
@@ -88,7 +89,7 @@ const KittyCard = props => {
           我的
         </Label>
       )}
-      <KittyAvatar dna={dna} />
+      <KittyAvatar asset={dna.asset} />
       <Card.Content>
         <Card.Header>ID 号: {displayId}</Card.Header>
         <Card.Meta style={{ overflowWrap: 'break-word' }}>
