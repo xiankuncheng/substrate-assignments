@@ -56,6 +56,7 @@ impl system::Config for Test {
 impl pallet_poe::Config for Test {
 	type MaxClaimLength = MaxClaimLength;
 	type Event = Event;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

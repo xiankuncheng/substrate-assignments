@@ -62,29 +62,29 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: PoeModule Proofs (r:1 w:1)
 	/// The range of component `d` is `[0, 512]`.
 	fn create_claim(d: u32, ) -> Weight {
-		Weight::from_ref_time(11_727_000 as u64)
+		(11_600_000 as Weight)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(5_000 as u64).saturating_mul(d as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add((6_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: PoeModule Proofs (r:1 w:1)
 	/// The range of component `d` is `[0, 512]`.
 	fn transfer_claim(d: u32, ) -> Weight {
-		Weight::from_ref_time(12_123_000 as u64)
+		(12_235_000 as Weight)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(7_000 as u64).saturating_mul(d as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add((9_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: PoeModule Proofs (r:1 w:1)
 	/// The range of component `d` is `[0, 512]`.
 	fn revoke_claim(d: u32, ) -> Weight {
-		Weight::from_ref_time(11_387_000 as u64)
+		(11_531_000 as Weight)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(8_000 as u64).saturating_mul(d as u64))
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+			.saturating_add((8_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
 
@@ -93,28 +93,28 @@ impl WeightInfo for () {
 	// Storage: PoeModule Proofs (r:1 w:1)
 	/// The range of component `d` is `[0, 512]`.
 	fn create_claim(d: u32, ) -> Weight {
-		Weight::from_ref_time(11_727_000 as u64)
+		(11_600_000 as Weight)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(5_000 as u64).saturating_mul(d as u64))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add((6_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: PoeModule Proofs (r:1 w:1)
 	/// The range of component `d` is `[0, 512]`.
 	fn transfer_claim(d: u32, ) -> Weight {
-		Weight::from_ref_time(12_123_000 as u64)
+		(12_235_000 as Weight)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(7_000 as u64).saturating_mul(d as u64))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add((9_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 	// Storage: PoeModule Proofs (r:1 w:1)
 	/// The range of component `d` is `[0, 512]`.
 	fn revoke_claim(d: u32, ) -> Weight {
-		Weight::from_ref_time(11_387_000 as u64)
+		(11_531_000 as Weight)
 			// Standard Error: 0
-			.saturating_add(Weight::from_ref_time(8_000 as u64).saturating_mul(d as u64))
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+			.saturating_add((8_000 as Weight).saturating_mul(d as Weight))
+			.saturating_add(RocksDbWeight::get().reads(1 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
 	}
 }
