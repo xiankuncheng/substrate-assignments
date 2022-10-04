@@ -6,13 +6,16 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
-	use frame_system::pallet_prelude::*;
-	use sp_std::vec::Vec;
+	pub use frame_support::pallet_prelude::*;
+	pub use frame_system::pallet_prelude::*;
+	pub use sp_std::prelude::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {

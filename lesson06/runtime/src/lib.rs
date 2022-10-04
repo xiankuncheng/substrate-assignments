@@ -339,6 +339,7 @@ mod benches {
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
 		[pallet_template, TemplateModule]
+		[pallet_poe, PoeModule]
 	);
 }
 
@@ -504,7 +505,7 @@ impl_runtime_apis! {
 			let mut list = Vec::<BenchmarkList>::new();
 			list_benchmarks!(list, extra);
 
-			let storage_info = AllPalletsWithSystem::storage_info(); ss
+			let storage_info = AllPalletsWithSystem::storage_info();
 
 			(list, storage_info)
 		}
